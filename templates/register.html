@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>註冊新帳號</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            margin: 0;
+        }
+        .register-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+        input[type="text"], input[type="password"] {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+        .logo {
+            width: 150px; /* 根據需求調整大小 */
+            margin-bottom: 0px; /* 增加 LOGO 與登入表單的距離 */
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <a href="/">
+            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="公司 LOGO" class="logo">
+        </a>
+        <h2>註冊新帳號</h2>
+        <form id="registerForm">
+            <input type="text" id="account" name="account" placeholder="帳號" required>
+            <input type="password" id="password" name="password" placeholder="密碼" required>
+            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="確認密碼" required>
+            <button type="button" onclick="redirectToLogin()">返回登入</button>
+            <button type="button" onclick="register()">註冊</button>
+        </form>
+        <p class="error-message" id="errorMessage"></p>
+    </div>
+
+    <script>
+function register() {
+    const account = document.getElementById('account').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const confirmPassword = document.getElementById('confirmPassword').value.trim();
+    const errorMessage = document.getElementById('errorMessage');
+
+    if (!account || !password) {
+        errorMessage.innerText = '請輸入帳號與密碼';
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        errorMessage.innerText = '密碼與確認密碼不一致';
+        return;
+    }
+
+    fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ account, password, confirm_password: confirmPassword })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("後端回應:", data);  // 🔍 確保 JSON 正確
+        if (data.message.includes('註冊成功')) {
+            alert('🎉 註冊成功！將跳轉至登入頁面');
+            window.location.href = '/';  // ✅ 確保跳轉
+        } else {
+            errorMessage.innerText = data.message || '註冊失敗';
+        }
+    })
+    .catch(error => {
+        console.error('🚨 註冊錯誤:', error);
+        errorMessage.innerText = '系統錯誤，請稍後再試';
+    });
+}
+
+
+        function redirectToLogin() {
+            // 跳轉到登入頁面
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>
+    

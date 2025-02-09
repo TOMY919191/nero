@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>個人頁面設置</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: row;
+            font-family: Arial, sans-serif;
+        }
+        .form-container {
+            width: 50%;
+            padding: 20px;
+            border-right: 1px solid #ccc;
+        }
+        .preview-container {
+            width: 50%;
+            padding: 20px;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .phone-preview {
+            width: 360px;
+            height: 640px;
+            border: 15px solid #000;
+            border-radius: 30px;
+            background-color: #fff;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .preview {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            background-size: cover;
+            background-position: center;
+            height: 100%;
+        }
+        img {
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            margin: 10px auto;
+        }
+        .social-icons a {
+            display: inline-block;
+            margin: 5px;
+            text-decoration: none;
+            color: white;
+            background-color: #007bff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>設置您的個人頁面</h1>
+        <form id="userForm">
+            <!-- 姓名與職稱 -->
+            <label for="name">姓名：</label>
+            <input type="text" id="name" name="name" placeholder="輸入姓名" oninput="updatePreview()" required>
+            <label for="nameColor">字體顏色：</label>
+            <input type="color" id="nameColor" name="nameColor" onchange="updatePreview()"><br><br>
+
+            <label for="title">職稱：</label>
+            <input type="text" id="title" name="title" placeholder="輸入職稱" oninput="updatePreview()" required>
+            <label for="titleColor">字體顏色：</label>
+            <input type="color" id="titleColor" name="titleColor" onchange="updatePreview()"><br><br>
+
+            <!-- 簡介 -->
+            <label for="description">簡介：</label><br>
+            <textarea id="description" name="description" rows="4" cols="50" placeholder="輸入個人簡介" oninput="updatePreview()"></textarea>
+            <label for="descriptionColor">字體顏色：</label>
+            <input type="color" id="descriptionColor" name="descriptionColor" onchange="updatePreview()"><br><br>
+
+            <!-- 大頭貼 -->
+            <label for="avatar">上傳大頭貼：</label>
+            <input type="file" id="avatar" name="avatar" accept="image/*" onchange="loadImage(event)"><br><br>
+
+            <!-- 背景選擇 -->
+            <label for="background">選擇背景：</label>
+            <select id="background" name="background" onchange="updateBackground()">
+                <option value="template1">模板1</option>
+                <option value="template2">模板2</option>
+                <option value="template3">模板3</option>
+                <option value="custom_color">自定義顏色</option>
+                <option value="custom_image">上傳背景圖片</option>
+            </select><br><br>
+
+            <label for="custom_color">自定義背景色 (僅限自定義選項)：</label>
+            <input type="color" id="custom_color" name="custom_color" onchange="updateBackground()"><br><br>
+
+            <label for="backgroundImage" style="display: none;">上傳背景圖片：</label>
+            <input type="file" id="backgroundImage" name="backgroundImage" accept="image/*" onchange="loadBackground(event)" style="display: none;"><br><br>
+
+            <!-- 社交媒體連結 -->
+            <h3>填寫您的社交媒體連結 (留空則不顯示)</h3>
+            <label for="email">Email：</label>
+            <input type="email" id="email" name="email" placeholder="you@email.com" oninput="updatePreview()"><br><br>
+
+            <label for="phone">電話：</label>
+            <input type="text" id="phone" name="phone" placeholder="123456789" oninput="updatePreview()"><br><br>
+
+            <label for="facebook">Facebook：</label>
+            <input type="url" id="facebook" name="facebook" placeholder="https://facebook.com/yourprofile" oninput="updatePreview()"><br><br>
+
+            <label for="instagram">Instagram：</label>
+            <input type="url" id="instagram" name="instagram" placeholder="https://instagram.com/yourprofile" oninput="updatePreview()"><br><br>
+
+            <label for="youtube">YouTube：</label>
+            <input type="url" id="youtube" name="youtube" placeholder="https://youtube.com/yourchannel" oninput="updatePreview()"><br><br>
+
+            <label for="tiktok">TikTok：</label>
+            <input type="url" id="tiktok" name="tiktok" placeholder="https://tiktok.com/@yourprofile" oninput="updatePreview()"><br><br>
+
+            <label for="whatsapp">WhatsApp：</label>
+            <input type="url" id="whatsapp" name="whatsapp" placeholder="https://wa.me/yourphone" oninput="updatePreview()"><br><br>
+
+            <label for="messenger">Messenger：</label>
+            <input type="url" id="messenger" name="messenger" placeholder="https://m.me/yourprofile" oninput="updatePreview()"><br><br>
+
+            <label for="line">LINE：</label>
+            <input type="url" id="line" name="line" placeholder="https://line.me/yourprofile" oninput="updatePreview()"><br><br>
+
+            <label for="telegram">Telegram：</label>
+            <input type="url" id="telegram" name="telegram" placeholder="https://t.me/yourusername" oninput="updatePreview()"><br><br>
+
+            <label for="paypal">PayPal：</label>
+            <input type="url" id="paypal" name="paypal" placeholder="https://paypal.me/yourprofile" oninput="updatePreview()"><br><br>
+
+            <label for="weibo">Weibo：</label>
+            <input type="url" id="weibo" name="weibo" placeholder="https://weibo.com/yourprofile" oninput="updatePreview()"><br><br>
+
+            <label for="twitter">Twitter：</label>
+            <input type="url" id="twitter" name="twitter" placeholder="https://twitter.com/yourprofile" oninput="updatePreview()"><br><br>
+
+            <label for="snapchat">Snapchat：</label>
+            <input type="url" id="snapchat" name="snapchat" placeholder="https://snapchat.com/add/yourprofile" oninput="updatePreview()"><br><br>
+
+            <label for="linkedin">LinkedIn：</label>
+            <input type="url" id="linkedin" name="linkedin" placeholder="https://linkedin.com/in/yourprofile" oninput="updatePreview()"><br><br>
+
+            <label for="reddit">Reddit：</label>
+            <input type="url" id="reddit" name="reddit" placeholder="https://reddit.com/user/yourprofile" oninput="updatePreview()"><br><br>
+
+            <label for="tumblr">Tumblr：</label>
+            <input type="url" id="tumblr" name="tumblr" placeholder="https://yourblog.tumblr.com" oninput="updatePreview()"><br><br>
+
+            <label for="pinterest">Pinterest：</label>
+            <input type="url" id="pinterest" name="pinterest" placeholder="https://pinterest.com/yourprofile" oninput="updatePreview()"><br><br>
+
+            <label for="twitch">Twitch：</label>
+            <input type="url" id="twitch" name="twitch" placeholder="https://twitch.tv/yourprofile" oninput="updatePreview()"><br><br>
+
+            <label for="vimeo">Vimeo：</label>
+            <input type="url" id="vimeo" name="vimeo" placeholder="https://vimeo.com/yourprofile" oninput="updatePreview()"><br><br>
+
+            <label for="patreon">Patreon：</label>
+            <input type="url" id="patreon" name="patreon" placeholder="https://patreon.com/yourprofile" oninput="updatePreview()"><br><br>
+
+            <label for="amazon">Amazon：</label>
+            <input type="url" id="amazon" name="amazon" placeholder="https://amazon.com/yourprofile" oninput="updatePreview()"><br><br>
+        </form>
+    </div>
+
+    <div class="preview-container">
+        <div class="phone-preview">
+            <div class="preview" id="preview" style="background-color: #007bff;">
+                <img id="previewAvatar" src="https://via.placeholder.com/150" alt="Avatar">
+                <h2 id="previewName" style="color: white;">您的姓名</h2>
+                <h3 id="previewTitle" style="color: white;">您的職稱</h3>
+                <p id="previewDescription" style="color: white;">這是您的簡介內容</p>
+                <div class="social-icons" id="previewLinks">
+                    <!-- 即時社交連結會顯示在這裡 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updatePreview() {
+            // 更新姓名、職稱、簡介
+            document.getElementById('previewName').textContent = document.getElementById('name').value || '您的姓名';
+            document.getElementById('previewTitle').textContent = document.getElementById('title').value || '您的職稱';
+            document.getElementById('previewDescription').textContent = document.getElementById('description').value || '這是您的簡介內容';
+
+            // 更新字體顏色
+            document.getElementById('previewName').style.color = document.getElementById('nameColor').value;
+            document.getElementById('previewTitle').style.color = document.getElementById('titleColor').value;
+            document.getElementById('previewDescription').style.color = document.getElementById('descriptionColor').value;
+
+            // 更新社交連結
+            const socialFields = [
+                'email', 'phone', 'facebook', 'instagram', 'youtube', 'tiktok', 'whatsapp', 'messenger',
+                'line', 'telegram', 'paypal', 'weibo', 'twitter', 'snapchat', 'linkedin', 'reddit',
+                'tumblr', 'pinterest', 'twitch', 'vimeo', 'patreon', 'amazon'
+            ];
+            const previewLinks = document.getElementById('previewLinks');
+            previewLinks.innerHTML = ''; // 清空連結
+            socialFields.forEach(field => {
+                const value = document.getElementById(field)?.value;
+                if (value) {
+                    const link = document.createElement('a');
+                    link.href = value;
+                    link.target = '_blank';
+                    link.textContent = field.charAt(0).toUpperCase() + field.slice(1);
+                    previewLinks.appendChild(link);
+                }
+            });
+        }
+
+        function loadImage(event) {
+            // 更新大頭貼
+            const reader = new FileReader();
+            reader.onload = function () {
+                document.getElementById('previewAvatar').src = reader.result;
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        function updateBackground() {
+            const background = document.getElementById('background').value;
+            const customColor = document.getElementById('custom_color').value;
+            const preview = document.getElementById('preview');
+            const backgroundImage = document.getElementById('backgroundImage');
+
+            if (background === 'custom_color') {
+                preview.style.backgroundColor = customColor;
+                preview.style.backgroundImage = '';
+                backgroundImage.style.display = 'none';
+            } else if (background === 'custom_image') {
+                backgroundImage.style.display = 'inline';
+            } else {
+                preview.style.backgroundColor = '';
+                preview.style.backgroundImage = `url('/static/${background}.png')`;
+                backgroundImage.style.display = 'none';
+            }
+        }
+
+        function loadBackground(event) {
+            // 更新背景圖片
+            const reader = new FileReader();
+            reader.onload = function () {
+                document.getElementById('preview').style.backgroundImage = `url(${reader.result})`;
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    </script>
+</body>
+</html>

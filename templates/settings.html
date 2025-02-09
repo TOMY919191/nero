@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>個人頁面設置</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: row;
+            font-family: Arial, sans-serif;
+        }
+        .form-container {
+            width: 50%;
+            padding: 20px;
+            border-right: 1px solid #ccc;
+        }
+        .preview-container {
+            width: 50%;
+            padding: 20px;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .phone-preview {
+            width: 360px;
+            height: 640px;
+            border: 15px solid #000;
+            border-radius: 30px;
+            background-color: #fff;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .preview {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            background-size: cover;
+            background-position: center;
+            height: 100%;
+        }
+        img {
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            margin: 10px auto;
+        }
+        .social-icons {
+            margin-top: 10px;
+        }
+        .social-icons img {
+            width: 50px;
+            height: 50px;
+            margin: 5px;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+        }
+        .settings-id {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>設置您的個人頁面</h1>
+
+        <!-- 顯示 settings_id -->
+        <div class="settings-id">
+            <p>設定 ID: {{ settings_id }}</p>
+        </div>
+
+        <form id="userForm" method="POST" action="/save-settings" enctype="multipart/form-data">
+            <!-- 設定 ID -->
+            <input type="hidden" id="settings_id" name="settings_id" value="{{ settings_id }}">
+
+            <!-- 姓名與職稱 -->
+            <label for="name">姓名：</label>
+            <input type="text" id="name" name="name" value="{{ settings['name'] }}" placeholder="輸入姓名" oninput="updatePreview()" required>
+            <label for="nameColor">字體顏色：</label>
+            <input type="color" id="nameColor" name="nameColor" value="{{ settings['nameColor'] }}" onchange="updatePreview()">
+
+            <label for="title">職稱：</label>
+            <input type="text" id="title" name="title" value="{{ settings['title'] }}" placeholder="輸入職稱" oninput="updatePreview()" required>
+            <label for="titleColor">字體顏色：</label>
+            <input type="color" id="titleColor" name="titleColor" value="{{ settings['titleColor'] }}" onchange="updatePreview()">
+
+            <!-- 簡介 -->
+            <label for="description">簡介：</label><br>
+            <textarea id="description" name="description" rows="4" cols="50" placeholder="輸入個人簡介" oninput="updatePreview()">{{ settings['description'] }}</textarea>
+            <label for="descriptionColor">字體顏色：</label>
+            <input type="color" id="descriptionColor" name="descriptionColor" value="{{ settings['descriptionColor'] }}" onchange="updatePreview()">
+
+            <!-- 大頭貼 -->
+            <label for="avatar">上傳大頭貼：</label>
+            <input type="file" id="avatar" name="avatar" accept="image/*" onchange="loadImage(event)"><br><br>
+
+            <!-- 背景選擇 -->
+            <label for="background">背景選擇：</label>
+            <select id="background" name="background" onchange="updateBackground()">
+                <option value="default" {% if settings['background'] == 'default' %}selected{% endif %}>預設背景</option>
+                <option value="custom_color" {% if settings['background'] == 'custom_color' %}selected{% endif %}>背景顏色</option>
+                <option value="custom_image" {% if settings['background'] == 'custom_image' %}selected{% endif %}>上傳背景圖片</option>
+            </select><br><br>
+            
+            <label for="custom_color" style="display: none;">背景顏色：</label>
+            <input type="color" id="custom_color" name="custom_color" value="{{ settings['customColor'] }}" onchange="updateBackground()" {% if settings['background'] != 'custom_color' %}style="display: none;"{% endif %}>
+            
+            <label for="backgroundImage" style="display: none;">上傳背景圖片：</label>
+            <input type="file" id="backgroundImage" name="backgroundImage" accept="image/*" onchange="loadBackground(event)" {% if settings['background'] != 'custom_image' %}style="display: none;"{% endif %}>
+                       <h3>選擇您的社交媒體連結 (最多三個)</h3>
+            <div id="linkChoices">
+                {% for platform in ['facebook', 'instagram', 'x', 'youtube', 'line', 'line_official'] %}
+                <label>
+                    <input type="checkbox" id="{{ platform }}_check" value="{{ platform }}" 
+                           onchange="toggleLinkInput(this)" 
+                           {% if settings[platform] %} checked {% endif %}> {{ platform.capitalize() }}
+                </label>
+                <input type="url" name="{{ platform }}" id="{{ platform }}_input" 
+                       value="{{ settings[platform] if settings[platform] else '' }}" 
+                       placeholder="輸入 {{ platform.capitalize() }} 連結" 
+                       {% if not settings[platform] %} disabled {% endif %}
+                       oninput="updateSocialPreview('{{ platform }}')">
+                <br>
+                {% endfor %}
+            </div>
+            
+            
+            <div id="linkInputs"></div>
+
+            <!-- 儲存按鈕 -->
+            <button type="submit">儲存設定</button>
+        </form>
+    </div>
+
+    <div class="preview-container">
+        <div class="phone-preview">
+            <div class="preview" id="preview" style="background-color: #007bff;">
+                <img id="previewAvatar" src="{{ settings['avatarBase64'] or 'data:image/png;base64,iVBORw0KGg...' }}" alt="Avatar">
+                <h2 id="previewName" style="color: white;">您的姓名</h2>
+                <h3 id="previewTitle" style="color: white;">您的職稱</h3>
+                <p id="previewDescription" style="color: white;">這是您的簡介內容</p>
+                <div class="social-icons" id="previewLinks"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const maxLinks = 3;
+        let selectedLinks = [];
+        const socialIcons = {
+            "facebook": "https://upload.wikimedia.org/wikipedia/commons/4/44/Facebook_Logo.png",
+            "instagram": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png",
+            "x": "https://s3-symbol-logo.tradingview.com/twitter--600.png",
+            "youtube": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/YouTube_social_white_circle_%282017%29.svg/640px-YouTube_social_white_circle_%282017%29.svg.png",
+            "line": "https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg",
+            "line_official": "https://vos.line-scdn.net/loamkt-static/images/uploads/site_settings/d2be10c727a8be900660b078739b50a5.png"
+        };
+
+        // ✅ 勾選時啟用輸入框，顯示預覽，取消時刪除
+        function toggleLinkInput(checkbox) {
+            const platform = checkbox.value;
+            const inputField = document.getElementById(`${platform}_input`);
+            const previewLinks = document.getElementById("previewLinks");
+
+            if (checkbox.checked) {
+                if (selectedLinks.length >= maxLinks) {
+                    alert("最多只能選擇三個！");
+                    checkbox.checked = false;
+                    return;
+                }
+                selectedLinks.push(platform);
+
+                // ✅ 啟用輸入框
+                inputField.disabled = false;
+
+                // ✅ 顯示預覽圖示（初始時無連結）
+                let linkPreview = document.createElement("img");
+                linkPreview.id = `preview-${platform}`;
+                linkPreview.src = socialIcons[platform] || "https://via.placeholder.com/50";
+                linkPreview.alt = platform;
+                linkPreview.style.width = "50px";
+                linkPreview.style.height = "50px";
+                linkPreview.style.margin = "5px";
+                previewLinks.appendChild(linkPreview);
+            } else {
+                // ✅ 取消勾選時移除圖示與輸入框內容
+                selectedLinks = selectedLinks.filter(link => link !== platform);
+                inputField.disabled = true;
+                inputField.value = "";
+
+                let previewImage = document.getElementById(`preview-${platform}`);
+                if (previewImage) previewImage.remove();
+            }
+        }
+
+
+        // ✅ 監聽輸入框變化，更新預覽的連結
+        function updateSocialPreview(platform) {
+            const inputField = document.getElementById(`${platform}_input`);
+            const previewImage = document.getElementById(`preview-${platform}`);
+
+            if (inputField.value.trim()) {
+                previewImage.onclick = function () {
+                    window.open(inputField.value.trim(), "_blank");
+                };
+                previewImage.style.cursor = "pointer";
+            } else {
+                previewImage.onclick = null;
+                previewImage.style.cursor = "default";
+            }
+        }
+
+
+
+
+
+
+        function updatePreview() {
+    // 確保所有元素存在
+    const nameElement = document.getElementById('previewName');
+    const titleElement = document.getElementById('previewTitle');
+    const descriptionElement = document.getElementById('previewDescription');
+
+    if (nameElement) {
+        nameElement.textContent = document.getElementById('name').value || '您的姓名';
+        nameElement.style.color = document.getElementById('nameColor').value;
+    }
+
+    if (titleElement) {
+        titleElement.textContent = document.getElementById('title').value || '您的職稱';
+        titleElement.style.color = document.getElementById('titleColor').value;
+    }
+
+    if (descriptionElement) {
+        descriptionElement.textContent = document.getElementById('description').value || '這是您的簡介內容';
+        descriptionElement.style.color = document.getElementById('descriptionColor').value;
+    }
+}
+
+
+        function loadImage(event) {
+            const reader = new FileReader();
+            reader.onload = function () {
+                document.getElementById('previewAvatar').src = reader.result;
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        function loadBackground(event) {
+            const reader = new FileReader();
+            reader.onload = function () {
+                document.getElementById('preview').style.backgroundImage = `url(${reader.result})`;
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        function updateBackground() {
+            const backgroundSelect = document.getElementById('background').value;
+            const customColorInput = document.getElementById('custom_color');
+            const backgroundImageInput = document.getElementById('backgroundImage');
+            const preview = document.getElementById('preview');
+
+            if (backgroundSelect === 'custom_color') {
+                customColorInput.style.display = 'inline';
+                backgroundImageInput.style.display = 'none';
+                preview.style.backgroundColor = customColorInput.value;
+                preview.style.backgroundImage = 'none'; // **確保不顯示背景圖片**
+                backgroundImageInput.dataset.image = ''; // **清除 dataset.image**
+                console.log("✅ 切換為純色背景，圖片已清除");
+            } else if (backgroundSelect === 'custom_image') {
+                customColorInput.style.display = 'none';
+                backgroundImageInput.style.display = 'inline';
+
+                // **如果有上傳背景圖片，則顯示該圖片**
+                if (backgroundImageInput.dataset.image) {
+                    preview.style.backgroundImage = `url(${backgroundImageInput.dataset.image})`;
+                    preview.style.backgroundColor = 'transparent';
+                    console.log("✅ 背景圖片已顯示");
+                }
+            } else {
+                customColorInput.style.display = 'none';
+                backgroundImageInput.style.display = 'none';
+                preview.style.backgroundColor = '#007bff';
+                preview.style.backgroundImage = 'none';
+            }
+        }
+
+
+// **確保載入設定時恢復背景選擇**
+window.onload = function () {
+    updatePreview();
+    loadExistingSocialLinks();
+
+    // **讀取 settings.json 設定背景**
+    const backgroundSetting = "{{ settings['background'] }}";
+    if (backgroundSetting) {
+        document.getElementById('background').value = backgroundSetting;
+        updateBackground();
+    }
+
+    // **載入背景圖片**
+    const backgroundBase64 = "{{ settings['backgroundImageBase64'] }}";
+    if (backgroundBase64 && backgroundBase64 !== "None") {
+        document.getElementById('preview').style.backgroundImage = `url(${backgroundBase64})`;
+    }
+};
+
+
+        
+window.onload = function () {
+        updatePreview();
+        loadExistingSocialLinks();
+
+        // ✅ 確保背景設定載入時正確應用
+        const background = "{{ settings['background'] }}";
+        const customColor = "{{ settings['customColor'] }}";
+        if (background === "custom_color") {
+            document.getElementById('preview').style.backgroundColor = customColor;
+            document.getElementById('preview').style.backgroundImage = "none"; // 清除圖片背景
+        }
+        selectedLinks = [];
+    Object.keys(socialIcons).forEach((key) => {
+        const checkbox = document.getElementById(`${key}_check`);
+        if (checkbox && checkbox.checked) {
+            selectedLinks.push(key);
+        }
+    });
+    };
+
+function loadExistingSocialLinks() {
+    const previewLinks = document.getElementById("previewLinks");
+
+    Object.keys(socialIcons).forEach((key) => {
+        const checkbox = document.querySelector(`input[value="${key}"]`);
+        if (checkbox && checkbox.checked) {
+            // 確保圖示顯示在預覽區
+            const linkPreview = document.createElement("img");
+            linkPreview.id = `preview-${key}`;
+            linkPreview.src = socialIcons[key];
+            linkPreview.alt = key;
+            previewLinks.appendChild(linkPreview);
+            
+            // 如果 `settings.json` 有存網址，自動填入
+            const savedUrl = "{{ settings[key] }}";
+            if (savedUrl && savedUrl !== "None") {
+                document.getElementById(`link-${key}`).value = savedUrl;
+                updateSocialPreview(key);
+            }
+        }
+    });
+
+    // 載入大頭貼
+    const avatarBase64 = "{{ settings['avatarBase64'] }}";
+    if (avatarBase64) {
+        document.getElementById('previewAvatar').src = avatarBase64;
+    }
+
+    // 載入背景
+    const backgroundBase64 = "{{ settings['backgroundImageBase64'] }}";
+    if (backgroundBase64) {
+        document.getElementById('preview').style.backgroundImage = `url(${backgroundBase64})`;
+    }
+}
+
+
+    </script>
+</body>
+</html>

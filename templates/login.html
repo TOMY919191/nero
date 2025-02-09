@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登入頁面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            margin: 0;
+        }
+        .login-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+        input[type="text"], input[type="password"] {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+        .logo {
+            width: 150px; /* 根據需求調整大小 */
+            margin-bottom: 0px; /* 增加 LOGO 與登入表單的距離 */
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <a href="/">
+            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="公司 LOGO" class="logo">
+        </a>
+        <h2>用戶登入</h2>
+        <form id="loginForm">
+            <input type="text" id="account" name="account" placeholder="帳號" required>
+            <input type="password" id="password" name="password" placeholder="密碼" required>
+            <button type="button" onclick="redirectToRegister()">註冊新帳號</button>
+            <button type="button" onclick="login()">登入</button>
+        </form>
+        <p class="error-message" id="errorMessage"></p>
+    </div>
+
+    <script>
+        function login() {
+            const account = document.getElementById('account').value.trim();
+            const password = document.getElementById('password').value.trim();
+        
+            if (!account || !password) {
+                document.getElementById('errorMessage').innerText = '請輸入帳號和密碼';
+                return;
+            }
+            fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `account=${account}&password=${password}`
+            })
+            .then(response => {
+                if (!response.ok) {  // 如果 HTTP 狀態碼不是 200（例如 401）
+                    return response.json().then(data => { throw new Error(data.message || "登入失敗"); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                window.location.href = `/settings?settings_id=${data.settings_id}`;
+            })
+            .catch(error => {
+                document.getElementById('errorMessage').innerText = error.message;  // 顯示真正的錯誤訊息
+            });
+
+        }
+        
+
+        function redirectToRegister() {
+            // 跳轉到註冊頁面
+            window.location.href = '/register';
+        }
+    </script>
+</body>
+</html>
+<script>
+    document.getElementById("loginForm").onsubmit = async function(event) {
+        event.preventDefault();
+    
+        let formData = new FormData(this);
+        let response = await fetch("/login", {
+            method: "POST",
+            body: formData
+        });
+    
+        let result = await response.json();
+        if (result.redirect) {
+            window.location.href = result.redirect;
+        } else {
+            alert(result.message);
+        }
+    };
+    </script>
+    
